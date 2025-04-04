@@ -31,13 +31,13 @@ Resources:
       BucketName: !Sub "uploads-${AWS::StackName}-${AWS::AccountId}-${Environment}"
 
   BucketNotifications:
-  Type: AWS::S3::BucketNotification
-  DependsOn: BucketPermission
-  Properties:
-    Bucket: !Ref UploadBucket
-    LambdaConfigurations:
-      - Event: "s3:ObjectCreated:*"
-        Function: !GetAtt NotificationFunction.Arn
+    Type: AWS::S3::BucketNotification
+    DependsOn: BucketPermission
+    Properties:
+      Bucket: !Ref UploadBucket
+      LambdaConfigurations:
+        - Event: "s3:ObjectCreated:*"
+          Function: !GetAtt NotificationFunction.Arn
 
   # Permission for S3 to invoke Lambda
   BucketPermission:
