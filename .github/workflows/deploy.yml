@@ -28,7 +28,7 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
@@ -43,10 +43,38 @@ jobs:
             echo "environment=dev" >> $GITHUB_OUTPUT
           fi
 
+      - name: Create deployment bucket
+        run: |
+          ENVIRONMENT=${{ steps.determine-environment.outputs.environment }}
+          BUCKET_NAME="sam-deployments-${{ github.repository_owner }}-${ENVIRONMENT}-$(aws sts get-caller-identity --query 'Account' --output text)"
+          BUCKET_NAME=$(echo "$BUCKET_NAME" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+
+          # Check if bucket exists, create if it doesn't
+          if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            echo "Creating deployment bucket: $BUCKET_NAME"
+            aws s3 mb "s3://$BUCKET_NAME" --region ${{ secrets.AWS_REGION }}
+          else
+            echo "Deployment bucket already exists: $BUCKET_NAME"
+          fi
+
+          # Store bucket name for later use
+          echo "deployment_bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
+        id: create_bucket
+
       - name: Build SAM application
         run: |
           sam build
 
       - name: Deploy to AWS
         run: |
-          sam deploy --config-env ${{ steps.determine-environment.outputs.environment }} --no-confirm-changeset --no-fail-on-empty-changeset
+          ENVIRONMENT=${{ steps.determine-environment.outputs.environment }}
+          BUCKET_NAME=${{ steps.create_bucket.outputs.deployment_bucket }}
+
+          # Deploy using the created bucket
+          sam deploy \
+            --config-env $ENVIRONMENT \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --s3-bucket $BUCKET_NAME \
+            --s3-prefix "s3-notification-system-$ENVIRONMENT" \
+            --region ${{ secrets.AWS_REGION }}
