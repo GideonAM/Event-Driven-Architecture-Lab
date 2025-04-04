@@ -27,7 +27,8 @@ Resources:
   UploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::StackName}-uploads-${Environment}"
+      # Modified bucket name to ensure global uniqueness
+      BucketName: !Sub "uploads-${AWS::StackName}-${AWS::AccountId}-${Environment}"
       # Add notifications to the bucket
       NotificationConfiguration:
         LambdaConfigurations:
