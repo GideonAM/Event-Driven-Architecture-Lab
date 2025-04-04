@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  S3 Event Notification System
+
+  An event-driven architecture that sends notifications when files are uploaded to S3
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Deployment environment
+
+  NotificationEmailAddresses:
+    Type: CommaDelimitedList
+    Description: List of email addresses to receive notifications
+    Default: ""
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, "prod"]
+
+Resources:
+  # S3 Bucket where files will be uploaded
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-uploads-${Environment}"
+      # Add notifications to the bucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt NotificationFunction.Arn
+
+  # Permission for S3 to invoke Lambda
+  BucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref NotificationFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !GetAtt UploadBucket.Arn
+
+  # SNS Topic for notifications
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-notifications-${Environment}"
+      DisplayName: "S3 Upload Notifications"
+
+  # Lambda function triggered by S3 events
+  NotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-notification-function-${Environment}"
+      CodeUri: ./functions/notification/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref NotificationTopic
+          ENVIRONMENT: !Ref Environment
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+
+  # SNS Subscriptions for email addresses
+  NotificationSubscription:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt SubscriptionFunction.Arn
+      TopicArn: !Ref NotificationTopic
+      EmailAddresses: !Ref NotificationEmailAddresses
+
+  # Custom resource Lambda for creating email subscriptions
+  SubscriptionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-subscription-function-${Environment}"
+      CodeUri: ./functions/subscription/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 60
+      Policies:
+        - SNSCrudPolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+
+Outputs:
+  UploadBucketName:
+    Description: "S3 bucket for file uploads"
+    Value: !Ref UploadBucket
+
+  NotificationTopicARN:
+    Description: "ARN of the SNS topic for notifications"
+    Value: !Ref NotificationTopic

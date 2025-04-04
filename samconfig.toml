@@ -1,0 +1,30 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "s3-notification-system"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xxxxxxxx"
+s3_prefix = "s3-notification-system"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"dev\" NotificationEmailAddresses=\"\""
+
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "s3-notification-system-dev"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xxxxxxxx"
+s3_prefix = "s3-notification-system-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"dev\" NotificationEmailAddresses=\"dev-notify@example.com\""
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "s3-notification-system-prod"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xxxxxxxx"
+s3_prefix = "s3-notification-system-prod"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"prod\" NotificationEmailAddresses=\"prod-notify@example.com,alerts@example.com\""
