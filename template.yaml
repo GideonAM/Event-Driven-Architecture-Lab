@@ -26,18 +26,14 @@ Resources:
   # S3 Bucket where files will be uploaded
   UploadBucket:
     Type: AWS::S3::Bucket
+    DependsOn: BucketPermission
     Properties:
       # Modified bucket name to ensure global uniqueness
       BucketName: !Sub "uploads-${AWS::StackName}-${AWS::AccountId}-${Environment}"
-
-  BucketNotifications:
-    Type: AWS::S3::BucketNotification
-    DependsOn: BucketPermission
-    Properties:
-      Bucket: !Ref UploadBucket
-      LambdaConfigurations:
-        - Event: "s3:ObjectCreated:*"
-          Function: !GetAtt NotificationFunction.Arn
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt NotificationFunction.Arn
 
   # Permission for S3 to invoke Lambda
   BucketPermission:
