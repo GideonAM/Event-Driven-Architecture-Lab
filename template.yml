@@ -34,7 +34,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub s3-trigger-fn-${AWS::StackName}
-      Handler: com.example.S3EventHandler::handleRequest
+      Handler: com.redeemerlives.EventDrivenArchitecture::handleRequest
       CodeUri: target/eda-event-driven-architecture.jar
       Policies:
         - SNSPublishMessagePolicy:
