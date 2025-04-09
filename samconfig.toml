@@ -1,0 +1,15 @@
+version = 0.1
+
+[default.deploy.parameters]
+region = "eu-west-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+resolve_s3 = true
+
+[dev.deploy.parameters]
+stack_name = "eda-s3-sns-dev"
+parameter_overrides = "Environment=dev EmailEndpoint=${DEV_EMAIL}"
+
+[prod.deploy.parameters]
+stack_name = "eda-s3-sns-prod"
+parameter_overrides = "Environment=prod EmailEndpoint=${PROD_EMAIL}"

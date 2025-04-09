@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Simple EDA with S3, Lambda, and SNS - Java Version
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: java17
+
+Parameters:
+  EmailEndpoint:
+    Type: String
+
+Resources:
+
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub eda-upload-bucket-${AWS::StackName}
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub eda-notification-topic-${AWS::StackName}
+
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref EmailEndpoint
+      TopicArn: !Ref NotificationTopic
+
+  S3TriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub s3-trigger-fn-${AWS::StackName}
+      Handler: com.example.S3EventHandler::handleRequest
+      CodeUri: target/eda-event-driven-architecture.jar
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref NotificationTopic
+      Events:
+        S3UploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref UploadBucket
+            Events: s3:ObjectCreated:*
+
+Outputs:
+  BucketName:
+    Value: !Ref UploadBucket
+  TopicArn:
+    Value: !Ref NotificationTopic
+  LambdaFunction:
+    Value: !Ref S3TriggerFunction

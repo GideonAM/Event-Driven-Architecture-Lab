@@ -1,0 +1,49 @@
+name: Deploy SAM Application (Java)
+
+on:
+  push:
+    branches:
+      - main
+      - test
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DEV_EMAIL: ${{ secrets.DEV_EMAIL }}
+      PROD_EMAIL: ${{ secrets.PROD_EMAIL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Java Project with Maven
+        run: mvn clean package
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build SAM application
+        run: sam build
+
+      - name: Deploy SAM application
+        run: |
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          if [[ "$BRANCH_NAME" == "main" ]]; then
+            sam deploy --config-env prod --parameter-overrides "EmailEndpoint=${PROD_EMAIL}" --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+          elif [[ "$BRANCH_NAME" == "test" ]]; then
+            sam deploy --config-env dev --parameter-overrides "EmailEndpoint=${DEV_EMAIL}" --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+          else
+            echo "Branch not configured for deployment: $BRANCH_NAME"
+          fi
