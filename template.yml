@@ -23,6 +23,13 @@ Resources:
     Properties:
       TopicName: !Sub eda-notification-topic-${AWS::StackName}
 
+  EmailSub:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: skypewest@681mail.com
+      TopicArn: !Ref NotificationTopic
+
   EmailSubscription:
     Type: AWS::SNS::Subscription
     Properties:
