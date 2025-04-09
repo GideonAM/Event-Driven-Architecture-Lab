@@ -27,6 +27,9 @@ jobs:
       - name: Build Java Project with Maven
         run: mvn clean package
 
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
