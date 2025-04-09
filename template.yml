@@ -42,6 +42,8 @@ Resources:
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref NotificationTopic
+      Metadata:
+        BuildMethod: skip
       Events:
         S3UploadEvent:
           Type: S3
