@@ -35,8 +35,7 @@ Resources:
     Properties:
       FunctionName: !Sub s3-trigger-fn-${AWS::StackName}
       Handler: com.example.S3EventHandler::handleRequest
-      CodeUri: target/Event-Driven-Architecture-Lab-1.0-SNAPSHOT.jar
-      Policies:
+      CodeUri: target/
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt NotificationTopic.TopicName
       Environment:
