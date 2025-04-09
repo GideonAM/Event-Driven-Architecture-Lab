@@ -35,7 +35,7 @@ Resources:
     Properties:
       FunctionName: !Sub s3-trigger-fn-${AWS::StackName}
       Handler: com.example.S3EventHandler::handleRequest
-      CodeUri: target/
+      CodeUri: ./
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt NotificationTopic.TopicName
