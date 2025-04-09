@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.redeemerlives</groupId>
-  <artifactId>eda-event-driven-architecture</artifactId>
+  <artifactId>Event-Driven-Architecture-Lab</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
